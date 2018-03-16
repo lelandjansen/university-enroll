@@ -1,6 +1,8 @@
 .idea/
 node_modules/
 credentials.json
+.nyc_output/
+coverage/
 
 # Ignore all images (screenshots)
 *.png

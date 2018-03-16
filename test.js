@@ -6,8 +6,9 @@ const puppeteer = require('puppeteer');
 const { login } = require('./login.js');
 
 const credentials = JSON.parse(fs.readFileSync("credentials.json"));
-const university = credentials.university || "ualberta";
+const university = credentials.university;
 const config = JSON.parse(fs.readFileSync("config.json"))[university];
+
 
 describe('login()', function () {
     let browser, page;
