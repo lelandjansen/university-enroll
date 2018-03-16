@@ -1,6 +1,6 @@
-## How to Create Encrypted Credentials File for Travis
+## How to create encrypted credentials file for Travis
 
-Create `credentials_${TEST_UNIVERSITY_ID}.json.enc` from `credentials.json`
+These commands create `credentials_${TEST_UNIVERSITY_ID}.json.enc` from `credentials.json`:
 
 ```
 $ export TEST_UNIVERSITY_ID=<your-university-id>
