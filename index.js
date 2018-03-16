@@ -6,11 +6,9 @@ const mailgunjs = require('mailgun-js');
 const { login } = require('./login');
 
 const credentials = JSON.parse(fs.readFileSync("credentials.json"));
+const config = JSON.parse(fs.readFileSync("config.json"))[credentials.university];
 
 const mailgun = mailgunjs({apiKey: credentials.mailgun_api_key, domain: credentials.mailgun_domain});
-const watchlist = "https://www.beartracks.ualberta.ca/psc/uahebprd/EMPLOYEE/HRMS/c/ZSS_STUDENT_CENTER.ZSS_WATCH_LIST.GBL";
-//https://www.beartracks.ualberta.ca/psc/uahebprd/EMPLOYEE/HRMS/c/SA_LEARNER_SERVICES.SSR_SSENRL_CART.GBL?pslnkid=ZSS_HC_SSR_SSENRL_CART_GBL&FolderPath=PORTAL_ROOT_OBJECT.ZSS_ACADEMICS.ZSS_AC_ENROLL.ZSS_HC_SSR_SSENRL_CART_GBL&IsFolder=false&IgnoreParamTempl=FolderPath%2cIsFolder&PortalActualURL=https%3a%2f%2fwww.beartracks.ualberta.ca%2fpsc%2fuahebprd%2fEMPLOYEE%2fHRMS%2fc%2fSA_LEARNER_SERVICES.SSR_SSENRL_CART.GBL%3fpslnkid%3dZSS_HC_SSR_SSENRL_CART_GBL&PortalContentURL=https%3a%2f%2fwww.beartracks.ualberta.ca%2fpsc%2fuahebprd%2fEMPLOYEE%2fHRMS%2fc%2fSA_LEARNER_SERVICES.SSR_SSENRL_CART.GBL%3fpslnkid%3dZSS_HC_SSR_SSENRL_CART_GBL&PortalContentProvider=HRMS&PortalCRefLabel=Add&PortalRegistryName=EMPLOYEE&PortalServletURI=https%3a%2f%2fwww.beartracks.ualberta.ca%2fpsp%2fuahebprd%2f&PortalURI=https%3a%2f%2fwww.beartracks.ualberta.ca%2fpsc%2fuahebprd%2f&PortalHostNode=HRMS&NoCrumbs=yes&PortalKeyStruct=yes
-const enroll_url = "https://www.beartracks.ualberta.ca/psc/uahebprd/EMPLOYEE/HRMS/c/SA_LEARNER_SERVICES.SSR_SSENRL_CART.GBL";
 const rate = 15*1000;
 
 
@@ -18,7 +16,7 @@ async function send_email_notification(msg) {
     const data = {
         from: 'Watchlist Notifier <postmaster@'+credentials.mailgun_domain+'>',
         to: credentials.notify_email,
-        subject: 'Bear Tracks Watchlist Notification',
+        subject: config.notification_subject,
         html: msg
     };
 
@@ -31,88 +29,52 @@ async function send_email_notification(msg) {
     }
 }
 
-async function check_watchlist(page) {
-    await page.goto(watchlist);
-    const table_rows = await page.$$('[id^="trZSSV_WATCH_LIST$0_row"]');
-
-    const open_classes = [];
-    const closed_classes = [];
-
-    for(const row of table_rows) {
-        const open = await row.$('img[src="/cs/uahebprd/cache2/PS_CS_STATUS_OPEN_ICN_1.gif"]');
-        if(open !== null) {
-            const class_span = await row.$('[id^="win0divDERIVED_REGFRM1_SSR_CLASSNAME_"] span');
-            const class_text = await page.evaluate(span => span.innerHTML, class_span);
-            const section_span = await row.$('[id^="win0divDERIVED_REGFRM1_DESCR40"] span');
-            const section_text = await page.evaluate(span => span.innerHTML, section_span);
-            open_classes.push(class_text+" "+section_text);
-        }
-    }
-
-    for(const row of table_rows) {
-        const open = await row.$('img[src="/cs/uahebprd/cache2/PS_CS_COURSE_ENROLLED_ICN_1.gif"]');
-        if(open !== null) {
-            const class_span = await row.$('[id^="win0divDERIVED_REGFRM1_SSR_CLASSNAME_"] span');
-            const class_text = await page.evaluate(span => span.innerHTML, class_span);
-            const section_span = await row.$('[id^="win0divDERIVED_REGFRM1_DESCR40"] span');
-            const section_text = await page.evaluate(span => span.innerHTML, section_span);
-            closed_classes.push(class_text+" "+section_text);
-        }
-    }
-
-    return [open_classes, closed_classes]
+function clean_str(str) {
+    // Remove <br> and non-space whitespaces from the input string
+    return str.replace(/\<br\>|[^\S ]/g, '');
 }
 
 async function check_enroll(page) {
+    const {
+        enroll_url,
+        enroll_table_row_id,
+        enroll_checkbox,
+        enroll_open_img,
+        enroll_close_img,
+        enroll_course_title,
+        enroll_section_title
+    } = config;
+
     await page.goto(enroll_url);
 
-    const table_rows = await page.$$('[id^="trSSR_REGFORM_VW$0_row"]');
+    const table_rows = await page.$$(enroll_table_row_id);
 
     const open_classes = [];
     const closed_classes = [];
 
     for(const row of table_rows) {
-        const select = await row.$('input[class="PSCHECKBOX"]');
+        const select = await row.$(enroll_checkbox);
         const selectable = select !== null;
         if (selectable) {
-            const open = await row.$('img[src="/cs/uahebprd/cache2/PS_CS_STATUS_OPEN_ICN_1.gif"]');
-            if (open !== null) {
-                const class_span = await row.$('[id^="win0divZSS_DERIVED_COURSE_TITLE"] span');
-                const class_text = await page.evaluate(span => span.innerHTML, class_span);
-                const section_span = await row.$('[id^="win0divP_CLASS_NAME"] a, [id^="win0divP_CLASS_NAME"] span:not(.PSHYPERLINK)');
-                const section_text = await page.evaluate(span => span.innerHTML, section_span);
+            const open = await row.$(enroll_open_img);
+            const full = await row.$(enroll_close_img);
+
+            if (open !== null || full !== null) {
+                const class_span = await row.$(enroll_course_title);
+                const class_html = await page.evaluate(span => span.innerHTML, class_span);
+                const class_text = clean_str(class_html);
+                const section_span = await row.$(enroll_section_title);
+                const section_html = await page.evaluate(span => span.innerHTML, section_span);
+                const section_text = clean_str(section_html);
 
                 const _class = {
                     class_name: class_text,
                     section_name: section_text,
-                    name: () => class_text + " " + section_text,
+                    name: `${class_text} ${section_text}`,
                     select_box: select
                 };
 
-                open_classes.push(_class);
-            }
-        }
-    }
-
-    for(const row of table_rows) {
-        const select = await row.$('input[class="PSCHECKBOX"]');
-        const selectable = select !== null;
-        if (selectable) {
-            const full = await row.$('img[src="/cs/uahebprd/cache2/PS_CS_COURSE_ENROLLED_ICN_1.gif"]');
-            if (full !== null) {
-                const class_span = await row.$('[id^="win0divZSS_DERIVED_COURSE_TITLE"] span');
-                const class_text = await page.evaluate(span => span.innerHTML, class_span);
-                const section_span = await row.$('[id^="win0divP_CLASS_NAME"] a, [id^="win0divP_CLASS_NAME"] span:not(.PSHYPERLINK)');
-                const section_text = await page.evaluate(span => span.innerHTML, section_span);
-
-                const _class = {
-                    class_name: class_text,
-                    section_name: section_text,
-                    name: () => class_text + " " + section_text,
-                    select_box: select
-                };
-
-                closed_classes.push(_class);
+                (open !== null ? open_classes : closed_classes).push(_class);
             }
         }
     }
@@ -126,18 +88,19 @@ async function check_enroll(page) {
     console.log('new page');
     const page = await browser.newPage();
 
+    const { enroll_url } = config;
+
     try {
-        await login(page, credentials);
+        await login(page, config, credentials);
         let prev_availability = "";
 
         while(true) {
-
             const [open_classes, closed_classes] = await check_enroll(page);
-            
+
             const availability = `
                 <p>
-                    open classes: ${open_classes.map(c => c.name()).join(", ")}<br/>
-                    closed classes: ${closed_classes.map(c => c.name()).join(", ")}
+                    open classes: ${open_classes.map(c => c.name).join(", ")}<br/>
+                    closed classes: ${closed_classes.map(c => c.name).join(", ")}
                 </p>
                 ${enroll_url}`;
 
@@ -151,15 +114,15 @@ async function check_enroll(page) {
                     await open_class.select_box.click();
                     await page.screenshot({path: 'selected.png', fullPage: true});
 
-                    console.log(`Enrolling in ${open_class.name()}`)
-                    const enroll_handle = await page.$('[id="DERIVED_REGFRM1_LINK_ADD_ENRL$291$"]');
+                    console.log(`Enrolling in ${open_class.name}`);
+                    const enroll_handle = await page.$(config.enroll_submit_button);
                     await enroll_handle.click();
 
                     await page.screenshot({path: 'enrolling.png', fullPage: true});
 
                     await new Promise(resolve => setTimeout(resolve, 6000));
 
-                    const finish_handle = await page.$('[id="DERIVED_REGFRM1_SSR_PB_SUBMIT"]');
+                    const finish_handle = await page.$(config.enroll_submit_confirm_button);
                     await finish_handle.click();
 
                     await new Promise(resolve => setTimeout(resolve, 6000));

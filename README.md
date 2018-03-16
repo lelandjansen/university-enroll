@@ -1,7 +1,10 @@
-# ualberta-enroll
-[![Build Status](https://travis-ci.org/nlieb/ualberta-enroll.svg?branch=master)](https://travis-ci.org/nlieb/ualberta-enroll)
+# university-enroll
+[![Build Status](https://api.travis-ci.org/nwestbury/quest-enroll.svg?branch=master)](https://travis-ci.org/nwestbury/quest-enroll)
 
-Basically this software checks your "Add" list in your schedule builder (not watchlist) for open classes. If one or more green circles is found, indicating that those classes are open, it attempts to enroll in those classes. Behavior is undefined for enrollment failures (ie after a failure it might retry enrollment many times, which is bad). Mailgun is used for email notification of enrollment attempts.
+This software checks your "Add" list in your schedule builder (not watchlist) for open classes. 
+If one or more green circles is found, indicating that those classes are open, it attempts to 
+enroll in those classes. Behavior is undefined for enrollment failures (ie after a failure it might 
+retry enrollment many times, which is bad). Mailgun is used for email notification of enrollment attempts.
 
 ## Requirements
 - Latest LTS version of [nodejs](https://nodejs.org/en/) 
@@ -15,6 +18,7 @@ called `credentials.json` with this content:
 {
     "username": "your-username",
     "password": "your-password",
+    "university": "[your-university-shorthand]",
     "mailgun_api_key": "key-[your-unique-key]",
     "mailgun_domain": "sandbox[your-unique-sandbox-id].mailgun.org",
     "notify_email": "[your-personal-email]@provider.com"

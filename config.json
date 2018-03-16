@@ -1,0 +1,38 @@
+{
+    "uwaterloo": {
+        "watchlist_url": "https://quest.pecs.uwaterloo.ca/psc/SS/ACADEMIC/SA/c/SA_LEARNER_SERVICES.SSR_SSENRL_CART.GBL",
+        "enroll_url": "https://quest.pecs.uwaterloo.ca/psc/SS/ACADEMIC/SA/c/SA_LEARNER_SERVICES_2.SSR_SSENRL_CART.GBL",
+        "notification_subject": "Quest Watchlist Notification",
+        "signin_url": "https://quest.pecs.uwaterloo.ca/psp/SS/?cmd=login",
+        "signin_username_input": "input[name='userid']",
+        "signin_password_input": "input[name='pwd']",
+        "signin_submit_button": "input[name='Submit']",
+        "signin_done_selector": "#ptifrmtemplate",
+        "enroll_table_row_id": "[id^='trSSR_REGFORM_VW$0_row']",
+        "enroll_checkbox": "input[class='PSCHECKBOX']",
+        "enroll_open_img": "img[src='/cs/SS/cache/85328/PS_CS_STATUS_OPEN_ICN_1.gif']",
+        "enroll_close_img": "img[src='/cs/SS/cache/85328/PS_CS_STATUS_CLOSED_ICN_1.gif']",
+        "enroll_course_title": "a[id^='P_CLASS_NAME']",
+        "enroll_section_title": "span[id^='DERIVED_REGFRM1_SSR_MTG_SCHED_LONG']",
+        "enroll_submit_button": "[id='DERIVED_REGFRM1_LINK_ADD_ENRL']",
+        "enroll_submit_confirm_button": "[id='DERIVED_REGFRM1_SSR_PB_SUBMIT']"
+    },
+    "ualberta": {
+        "watchlist_url": "https://www.beartracks.ualberta.ca/psc/uahebprd/EMPLOYEE/HRMS/c/ZSS_STUDENT_CENTER.ZSS_WATCH_LIST.GBL",
+        "enroll_url": "https://www.beartracks.ualberta.ca/psc/uahebprd/EMPLOYEE/HRMS/c/SA_LEARNER_SERVICES.SSR_SSENRL_CART.GBL",
+        "notification_subject": "Bear Tracks Watchlist Notification",
+        "signin_url": "https://www.beartracks.ualberta.ca/uahebprd/signon.html",
+        "signin_username_input": "#loginform input#username",
+        "signin_password_input": "#loginform input#user_pass",
+        "signin_submit_button": "#loginform input[type=submit]",
+        "signin_done_selector": "frameset[title='Main Content']",
+        "enroll_table_row_id": "[id^='trSSR_REGFORM_VW$0_row']",
+        "enroll_checkbox": "input[class='PSCHECKBOX']",
+        "enroll_open_img": "img[src='/cs/uahebprd/cache2/PS_CS_STATUS_OPEN_ICN_1.gif']",
+        "enroll_close_img": "img[src='/cs/uahebprd/cache2/PS_CS_COURSE_ENROLLED_ICN_1.gif']",
+        "enroll_course_title": "[id^='win0divZSS_DERIVED_COURSE_TITLE'] span",
+        "enroll_section_title": "[id^='win0divP_CLASS_NAME'] a, [id^='win0divP_CLASS_NAME'] span:not(.PSHYPERLINK)",
+        "enroll_submit_button": "[id='DERIVED_REGFRM1_LINK_ADD_ENRL$291$']",
+        "enroll_submit_confirm_button": "[id='DERIVED_REGFRM1_SSR_PB_SUBMIT']"
+    }
+}

@@ -17,10 +17,10 @@
   "devDependencies": {},
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nlieb/ualberta-enroll.git"
+    "url": "git+https://github.com/nlieb/university-enroll.git"
   },
   "bugs": {
-    "url": "https://github.com/nlieb/ualberta-enroll/issues"
+    "url": "https://github.com/nlieb/university-enroll/issues"
   },
-  "homepage": "https://github.com/nlieb/ualberta-enroll#readme"
+  "homepage": "https://github.com/nlieb/university-enroll#readme"
 }

@@ -6,7 +6,8 @@ const puppeteer = require('puppeteer');
 const { login } = require('./login.js');
 
 const credentials = JSON.parse(fs.readFileSync("credentials.json"));
-
+const university = credentials.university || "ualberta";
+const config = JSON.parse(fs.readFileSync("config.json"))[university];
 
 describe('login()', function () {
     let browser, page;
@@ -22,6 +23,6 @@ describe('login()', function () {
 
     it('should login', async function () {
         this.timeout(30*1000);
-        await login(page, credentials);
+        await login(page, config, credentials);
     });
 });
