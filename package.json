@@ -11,8 +11,11 @@
     "puppeteer": "^1.0.0-rc"
   },
   "scripts": {
-    "test": "nyc mocha",
+    "test": "nyc --all mocha",
     "posttest": "nyc report --reporter=json && codecov -f coverage/*.json"
+  },
+  "nyc": {
+    "include": ["*.js"]
   },
   "description": "Watchlist watcher",
   "devDependencies": {

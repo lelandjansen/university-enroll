@@ -1,5 +1,6 @@
 # university-enroll
 [![Build Status](https://api.travis-ci.org/nlieb/university-enroll.svg?branch=master)](https://travis-ci.org/nlieb/university-enroll)
+[![codecov](https://codecov.io/gh/nlieb/university-enroll/branch/master/graph/badge.svg)](https://codecov.io/gh/nlieb/university-enroll)
 
 This software checks your "Add" list in your schedule builder (not watchlist) for open classes. 
 If one or more green circles is found, indicating that those classes are open, it attempts to 
