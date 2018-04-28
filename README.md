@@ -31,3 +31,11 @@ Then run in the terminal in the root directory:
 yarn install
 node index.js
 ```
+
+## Contributors
+
+(In arbitrary order):
+
+* Nathan Liebrecht ([@nlieb](https://github.com/nlieb))
+* James Hryniw ([@jhryniw](https://github.com/jhryniw))
+* Nicholas Westbury ([@nwestbury](https://github.com/nwestbury))
