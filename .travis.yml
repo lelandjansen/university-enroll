@@ -54,8 +54,15 @@ install:
   - yarn install
   # puppeteer's install script downloads Chrome
 script:
-  - openssl aes-256-cbc -K $encryption_key -iv $encryption_iv -in credentials_${TEST_UNIVERSITY_ID}.json.enc -out credentials.json -d
-  - npm test
+  - npm run lint
+  - |
+    openssl aes-256-cbc \
+      -K $encryption_key \
+      -iv $encryption_iv \
+      -in credentials_${TEST_UNIVERSITY_ID}.json.enc \
+      -out credentials.json \
+      -d \
+    && npm test
 jobs:
   include:
     - node_js: "7.6.0"

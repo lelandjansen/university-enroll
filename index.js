@@ -2,144 +2,143 @@ const fs = require('fs');
 const process = require('process');
 const puppeteer = require('puppeteer');
 const mailgunjs = require('mailgun-js');
+const {login} = require('./login');
+const credentials = JSON.parse(fs.readFileSync('credentials.json'));
+const config =
+    JSON.parse(fs.readFileSync('config.json'))[credentials.university];
 
-const { login } = require('./login');
+const mailgun = mailgunjs({
+  apiKey: credentials.mailgunApiKey,
+  domain: credentials.mailgunDomain,
+});
+const rate = 15 * 1000;
 
-const credentials = JSON.parse(fs.readFileSync("credentials.json"));
-const config = JSON.parse(fs.readFileSync("config.json"))[credentials.university];
-
-const mailgun = mailgunjs({apiKey: credentials.mailgun_api_key, domain: credentials.mailgun_domain});
-const rate = 15*1000;
-
-
-async function send_email_notification(msg) {
+async function sendEmailNotification(msg) {
     const data = {
-        from: 'Watchlist Notifier <postmaster@'+credentials.mailgun_domain+'>',
-        to: credentials.notify_email,
-        subject: config.notification_subject,
-        html: msg
+        from: 'Watchlist Notifier <postmaster@'+credentials.mailgunDomain+'>',
+        to: credentials.notifyEmail,
+        subject: config.notificationSubject,
+        html: msg,
     };
-
     try {
         const body = await mailgun.messages().send(data);
-        console.log("sent email notification");
+        console.log('sent email notification');
         console.log(body);
-    } catch(e) {
-        console.log("could not send email notification", e);
+    } catch (e) {
+        console.log('could not send email notification', e);
     }
 }
 
-function clean_str(str) {
+function cleanStr(str) {
     // Remove <br> and non-space whitespaces from the input string
-    return str.replace(/\<br\>|[^\S ]/g, '');
+    return str.replace(/<br>|[^\S ]/g, '');
 }
 
-async function check_enroll(page) {
+async function checkEnroll(page) {
     const {
-        enroll_url,
-        enroll_table_row_id,
-        enroll_checkbox,
-        enroll_open_img,
-        enroll_close_img,
-        enroll_course_title,
-        enroll_section_title
+        enrollUrl,
+        enrollTableRowId,
+        enrollCheckbox,
+        enrollOpenImage,
+        enrollClosedImage,
+        enrollCourseTitle,
+        enrollSectionTitle,
     } = config;
 
-    await page.goto(enroll_url);
+    await page.goto(enrollUrl);
 
-    const table_rows = await page.$$(enroll_table_row_id);
+    const tableRows = await page.$$(enrollTableRowId);
 
-    const open_classes = [];
-    const closed_classes = [];
+    const openClasses = [];
+    const closedClasses = [];
 
-    for(const row of table_rows) {
-        const select = await row.$(enroll_checkbox);
+    for (const row of tableRows) {
+        const select = await row.$(enrollCheckbox);
         const selectable = select !== null;
         if (selectable) {
-            const open = await row.$(enroll_open_img);
-            const full = await row.$(enroll_close_img);
+            const open = await row.$(enrollOpenImage);
+            const full = await row.$(enrollClosedImage);
 
             if (open !== null || full !== null) {
-                const class_span = await row.$(enroll_course_title);
-                const class_html = await page.evaluate(span => span.innerHTML, class_span);
-                const class_text = clean_str(class_html);
-                const section_span = await row.$(enroll_section_title);
-                const section_html = await page.evaluate(span => span.innerHTML, section_span);
-                const section_text = clean_str(section_html);
+                const classSpan = await row.$(enrollCourseTitle);
+                const classHtml =
+                    await page.evaluate((span) => span.innerHTML, classSpan);
+                const classText = cleanStr(classHtml);
+                const sectionSpan = await row.$(enrollSectionTitle);
+                const sectionHtml =
+                    await page.evaluate((span) => span.innerHTML, sectionSpan);
+                const sectionText = cleanStr(sectionHtml);
 
-                const _class = {
-                    class_name: class_text,
-                    section_name: section_text,
-                    name: `${class_text} ${section_text}`,
-                    select_box: select
+                const course = {
+                    className: classText,
+                    sectionName: sectionText,
+                    name: `${classText} ${sectionText}`,
+                    selectBox: select,
                 };
-
-                (open !== null ? open_classes : closed_classes).push(_class);
+                (open !== null ? openClasses : closedClasses).push(course);
             }
         }
     }
-
-    return [open_classes, closed_classes];
+    return [openClasses, closedClasses];
 }
 
-(async() => {
+(async () => {
     console.log('launching browser');
     const browser = await puppeteer.launch();
     console.log('new page');
     const page = await browser.newPage();
-
-    const { enroll_url } = config;
+    const {enrollUrl} = config;
 
     try {
         await login(page, config, credentials);
-        let prev_availability = "";
+        let previousAvailability = '';
 
-        while(true) {
-            const [open_classes, closed_classes] = await check_enroll(page);
-
+        while (true) { // eslint-disable-line no-constant-condition
+            const [openClasses, closedClasses] = await checkEnroll(page);
             const availability = `
                 <p>
-                    open classes: ${open_classes.map(c => c.name).join(", ")}<br/>
-                    closed classes: ${closed_classes.map(c => c.name).join(", ")}
+                    open classes: ${openClasses.map((c) => c.name).join(', ')}
+                    <br/>
+                    closed classes: ${
+                        closedClasses.map((c) => c.name).join(', ')}
                 </p>
-                ${enroll_url}`;
+                ${enrollUrl}`;
 
-            if(prev_availability !== availability) {
+            if (previousAvailability !== availability) {
                 console.log(availability);
-
-                prev_availability = availability;
-                await send_email_notification(availability);
-
-                for(open_class of open_classes) {
-                    await open_class.select_box.click();
-                    await page.screenshot({path: 'selected.png', fullPage: true});
-
-                    console.log(`Enrolling in ${open_class.name}`);
-                    const enroll_handle = await page.$(config.enroll_submit_button);
-                    await enroll_handle.click();
-
-                    await page.screenshot({path: 'enrolling.png', fullPage: true});
-
-                    await new Promise(resolve => setTimeout(resolve, 6000));
-
-                    const finish_handle = await page.$(config.enroll_submit_confirm_button);
-                    await finish_handle.click();
-
-                    await new Promise(resolve => setTimeout(resolve, 6000));
+                previousAvailability = availability;
+                await sendEmailNotification(availability);
+                for (let openClass of openClasses) {
+                    await openClass.selectBox.click();
+                    await page.screenshot({
+                      path: 'selected.png',
+                      fullPage: true,
+                    });
+                    console.log(`Enrolling in ${openClass.name}`);
+                    const enrollHandle =
+                        await page.$(config.enrollSubmitButton);
+                    await enrollHandle.click();
+                    await page.screenshot({
+                      path: 'enrolling.png',
+                      fullPage: true,
+                    });
+                    await new Promise((resolve) => setTimeout(resolve, 6000));
+                    const finishHandle =
+                        await page.$(config.enrollSubmitConfirmButton);
+                    await finishHandle.click();
+                    await new Promise((resolve) => setTimeout(resolve, 6000));
                     await page.screenshot({path: 'done.png', fullPage: true});
                 }
             } else {
                 process.stdout.write('.');
             }
-
-            await new Promise(resolve => setTimeout(resolve, rate));
+            await new Promise((resolve) => setTimeout(resolve, rate));
         }
-
-        browser.close();
-    } catch(e) {
+    } catch (e) {
         console.log('error! saved screenshot');
         console.log(e);
         await page.screenshot({path: 'screenshot.png', fullPage: true});
+    } finally {
+        browser.close();
     }
-
 })();
