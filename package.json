@@ -10,18 +10,43 @@
     "mocha": "^4.1.0",
     "puppeteer": "^1.0.0-rc"
   },
+  "devDependencies": {
+    "codecov": "^3.0.0",
+    "eslint": "^4.19.1",
+    "eslint-config-google": "^0.9.1",
+    "eslint-plugin-json": "^1.2.0",
+    "nyc": "^11.6.0"
+  },
   "scripts": {
+    "lint": "eslint . --ext .js --ext .json --ignore-pattern node_modules/",
+    "lint-fix": "eslint --fix . --ext .js --ignore-pattern node_modules/",
     "test": "nyc --all mocha",
     "posttest": "nyc report --reporter=json && codecov -f coverage/*.json"
   },
+  "eslintConfig": {
+    "extends": ["eslint:recommended", "google"],
+    "rules": {
+      "max-len": ["error", {"code": 80, "tabWidth": 4}],
+      "no-console": "off",
+      "require-jsdoc": "off",
+      "semi": [2, "always"]
+    },
+    "plugins": ["json"],
+    "env": {
+      "es6": true,
+      "mocha": true,
+      "node": true
+    },
+    "parserOptions": {
+      "ecmaVersion": 2018
+    }
+  },
   "nyc": {
-    "include": ["*.js"]
+    "include": [
+      "*.js"
+    ]
   },
   "description": "Watchlist watcher",
-  "devDependencies": {
-    "codecov": "^3.0.0",
-    "nyc": "^11.6.0"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nlieb/university-enroll.git"

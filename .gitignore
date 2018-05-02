@@ -3,6 +3,10 @@ node_modules/
 credentials.json
 .nyc_output/
 coverage/
+*.log
+.editorconfig
+*swo
+*swp
 
 # Ignore all images (screenshots)
 *.png
