@@ -39,3 +39,4 @@ node index.js
 * Nathan Liebrecht ([@nlieb](https://github.com/nlieb))
 * James Hryniw ([@jhryniw](https://github.com/jhryniw))
 * Nicholas Westbury ([@nwestbury](https://github.com/nwestbury))
+* Leland Jansen ([@lelandjansen](https://github.com/lelandjansen))
