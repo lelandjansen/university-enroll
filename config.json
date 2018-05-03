@@ -8,6 +8,9 @@
         "signInPasswordInput": "input[name='pwd']",
         "signInSubmitButton": "input[name='Submit']",
         "signInDoneSelector": "#ptifrmtemplate",
+        "termTableRowId": "",
+        "termRowRadioButton": "",
+        "termContinueButton": "",
         "enrollTableRowId": "[id^='trSSR_REGFORM_VW$0_row']",
         "enrollCheckbox": "input[class='PSCHECKBOX']",
         "enrollOpenImage": "img[src='/cs/SS/cache/85328/PS_CS_STATUS_OPEN_ICN_1.gif']",
@@ -26,13 +29,16 @@
         "signInPasswordInput": "#loginform input#user_pass",
         "signInSubmitButton": "#loginform input[type=submit]",
         "signInDoneSelector": "frameset[title='Main Content']",
+        "termTableRowId": "[id^='trSSR_DUMMY_RECV1$0_row']",
+        "termRowRadioButton": "input[class='PSRADIOBUTTON']",
+        "termContinueButton": "[id^='DERIVED_SSS_SCT_SSR_PB_GO']",
         "enrollTableRowId": "[id^='trSSR_REGFORM_VW$0_row']",
         "enrollCheckbox": "input[class='PSCHECKBOX']",
         "enrollOpenImage": "img[src='/cs/uahebprd/cache2/PS_CS_STATUS_OPEN_ICN_1.gif']",
         "enrollCloseImage": "img[src='/cs/uahebprd/cache2/PS_CS_COURSE_ENROLLED_ICN_1.gif']",
         "enrollCourseTitle": "[id^='win0divZSS_DERIVED_COURSE_TITLE'] span",
         "enrollSectionTitle": "[id^='win0divP_CLASS_NAME'] a, [id^='win0divP_CLASS_NAME'] span:not(.PSHYPERLINK)",
-        "enrollSubmitButton": "[id='DERIVED_REGFRM1_LINK_ADD_ENRL$291$']",
+        "enrollSubmitButton": "a[id^='DERIVED_REGFRM1_LINK_ADD_ENRL']",
         "enrollSubmitConfirmButton": "[id='DERIVED_REGFRM1_SSR_PB_SUBMIT']"
     }
 }

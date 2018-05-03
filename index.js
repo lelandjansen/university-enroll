@@ -6,12 +6,15 @@ const {login} = require('./login');
 const credentials = JSON.parse(fs.readFileSync('credentials.json'));
 const config =
     JSON.parse(fs.readFileSync('config.json'))[credentials.university];
-
 const mailgun = mailgunjs({
   apiKey: credentials.mailgunApiKey,
   domain: credentials.mailgunDomain,
 });
 const rate = 15 * 1000;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 async function sendEmailNotification(msg) {
     const data = {
@@ -34,9 +37,8 @@ function cleanStr(str) {
     return str.replace(/<br>|[^\S ]/g, '');
 }
 
-async function checkEnroll(page) {
+async function checkEnroll(page, enrollUrl) {
     const {
-        enrollUrl,
         enrollTableRowId,
         enrollCheckbox,
         enrollOpenImage,
@@ -46,6 +48,7 @@ async function checkEnroll(page) {
     } = config;
 
     await page.goto(enrollUrl);
+    await page.screenshot({path: 'screenshot.png', fullPage: true});
 
     const tableRows = await page.$$(enrollTableRowId);
 
@@ -82,63 +85,105 @@ async function checkEnroll(page) {
     return [openClasses, closedClasses];
 }
 
+async function getTermUrls(page) {
+    const termUrls = [];
+    const {
+        enrollUrl,
+        termTableRowId,
+        termContinueButton,
+        termRowRadioButton,
+    } = config;
+    await page.goto(enrollUrl);
+    const termCount = (await page.$$(termTableRowId)).length;
+    if (termCount === 0) {
+        return [enrollUrl];
+    }
+    for (let rowIndex = 0; rowIndex < termCount; ++rowIndex) {
+        await page.goto(enrollUrl);
+        const continueButton = await page.$(termContinueButton);
+        const row = (await page.$$(termTableRowId))[rowIndex];
+        const termSelection = await row.$(termRowRadioButton);
+        if (continueButton === null || termSelection === null) {
+            continue;
+        }
+        await termSelection.click();
+        await continueButton.click();
+        await page.waitForNavigation();
+        termUrls.push(await page.url());
+    }
+    return termUrls;
+}
+
+async function tryEnroll(page, enrollUrl, previousAvailability) {
+    const [openClasses, closedClasses] = await checkEnroll(page, enrollUrl);
+    const availability = `
+        <p>
+            open classes: ${openClasses.map((c) => c.name).join(', ')}
+            <br/>
+            closed classes: ${closedClasses.map((c) => c.name).join(', ')}
+        </p>
+        ${enrollUrl}`;
+    if (previousAvailability !== availability && 0 < openClasses.length) {
+        console.log(availability);
+        previousAvailability = availability;
+        for (const openClass of openClasses) {
+            await openClass.selectBox.click();
+            console.log(`Enrolling in ${openClass.name}`);
+        }
+        await page.screenshot({path: 'selected.png', fullPage: true});
+        await (await page.$(config.enrollSubmitButton)).click();
+        await page.screenshot({path: 'enrolling.png', fullPage: true});
+        await page.waitForSelector(config.enrollSubmitConfirmButton);
+        await (await page.$(config.enrollSubmitConfirmButton)).click();
+        await page.screenshot({path: 'done.png', fullPage: true});
+        for (const openClass of openClasses) {
+            console.log(`successfully enrolled in ${openClass.name}`);
+        }
+        sendEmailNotification(availability);
+    } else {
+        process.stdout.write('.');
+    }
+    return previousAvailability;
+}
+
 (async () => {
     console.log('launching browser');
     const browser = await puppeteer.launch();
-    console.log('new page');
     const page = await browser.newPage();
-    const {enrollUrl} = config;
-
+    let urls = [];
     try {
         await login(page, config, credentials);
-        let previousAvailability = '';
-
-        while (true) { // eslint-disable-line no-constant-condition
-            const [openClasses, closedClasses] = await checkEnroll(page);
-            const availability = `
-                <p>
-                    open classes: ${openClasses.map((c) => c.name).join(', ')}
-                    <br/>
-                    closed classes: ${
-                        closedClasses.map((c) => c.name).join(', ')}
-                </p>
-                ${enrollUrl}`;
-
-            if (previousAvailability !== availability) {
-                console.log(availability);
-                previousAvailability = availability;
-                await sendEmailNotification(availability);
-                for (let openClass of openClasses) {
-                    await openClass.selectBox.click();
-                    await page.screenshot({
-                      path: 'selected.png',
-                      fullPage: true,
-                    });
-                    console.log(`Enrolling in ${openClass.name}`);
-                    const enrollHandle =
-                        await page.$(config.enrollSubmitButton);
-                    await enrollHandle.click();
-                    await page.screenshot({
-                      path: 'enrolling.png',
-                      fullPage: true,
-                    });
-                    await new Promise((resolve) => setTimeout(resolve, 6000));
-                    const finishHandle =
-                        await page.$(config.enrollSubmitConfirmButton);
-                    await finishHandle.click();
-                    await new Promise((resolve) => setTimeout(resolve, 6000));
-                    await page.screenshot({path: 'done.png', fullPage: true});
-                }
-            } else {
-                process.stdout.write('.');
-            }
-            await new Promise((resolve) => setTimeout(resolve, rate));
-        }
+        console.log('retrieving enroll urls');
+        urls = await getTermUrls(page);
+        console.log(`retrieved ${urls.length} enroll urls`);
     } catch (e) {
+        await page.screenshot({path: 'screenshot.png', fullPage: true});
         console.log('error! saved screenshot');
         console.log(e);
-        await page.screenshot({path: 'screenshot.png', fullPage: true});
     } finally {
         browser.close();
+    }
+
+    for (const url of urls) {
+        (async (enrollUrl) => {
+            console.log('running enroller');
+            const browser = await puppeteer.launch();
+            const page = await browser.newPage();
+            await login(page, config, credentials);
+            let availability = '';
+            try {
+                while (true) { // eslint-disable-line no-constant-condition
+                    availability =
+                        await tryEnroll(page, enrollUrl, availability);
+                    await sleep(rate);
+                }
+            } catch (e) {
+                await page.screenshot({path: 'screenshot.png', fullPage: true});
+                console.log('error! saved screenshot');
+                console.log(e);
+            } finally {
+                browser.close();
+            }
+        })(url);
     }
 })();
