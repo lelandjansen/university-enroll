@@ -28,6 +28,7 @@ async function sendEmailNotification(msg) {
         console.log('sent email notification');
         console.log(body);
     } catch (e) {
+        console.log(new Date());
         console.log('could not send email notification', e);
     }
 }
@@ -157,9 +158,11 @@ async function tryEnroll(page, enrollUrl, previousAvailability) {
         urls = await getTermUrls(page);
         console.log(`retrieved ${urls.length} enroll urls`);
     } catch (e) {
+        console.log(new Date());
         await page.screenshot({path: 'screenshot.png', fullPage: true});
         console.log('error! saved screenshot');
         console.log(e);
+        await sendEmailNotification(e.toString());
     } finally {
         browser.close();
     }
@@ -178,9 +181,11 @@ async function tryEnroll(page, enrollUrl, previousAvailability) {
                     await sleep(rate);
                 }
             } catch (e) {
+                console.log(new Date());
                 await page.screenshot({path: 'screenshot.png', fullPage: true});
                 console.log('error! saved screenshot');
                 console.log(e);
+                await sendEmailNotification(e.toString());
             } finally {
                 browser.close();
             }
