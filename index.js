@@ -149,7 +149,9 @@ async function tryEnroll(page, enrollUrl, previousAvailability) {
 
 (async () => {
     console.log('launching browser');
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
     const page = await browser.newPage();
     let urls = [];
     try {
@@ -170,7 +172,9 @@ async function tryEnroll(page, enrollUrl, previousAvailability) {
     for (const url of urls) {
         (async (enrollUrl) => {
             console.log('running enroller');
-            const browser = await puppeteer.launch();
+            const browser = await puppeteer.launch({
+                args: ['--no-sandbox', '--disable-setuid-sandbox']
+            });
             const page = await browser.newPage();
             await login(page, config, credentials);
             let availability = '';
