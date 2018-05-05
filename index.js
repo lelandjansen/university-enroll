@@ -150,7 +150,7 @@ async function tryEnroll(page, enrollUrl, previousAvailability) {
 (async () => {
     console.log('launching browser');
     const browser = await puppeteer.launch({
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
     const page = await browser.newPage();
     let urls = [];
@@ -160,10 +160,11 @@ async function tryEnroll(page, enrollUrl, previousAvailability) {
         urls = await getTermUrls(page);
         console.log(`retrieved ${urls.length} enroll urls`);
     } catch (e) {
+        console.log('\n');
         console.log(new Date());
+        console.log(e);
         await page.screenshot({path: 'screenshot.png', fullPage: true});
         console.log('error! saved screenshot');
-        console.log(e);
         await sendEmailNotification(e.toString());
     } finally {
         browser.close();
@@ -173,26 +174,32 @@ async function tryEnroll(page, enrollUrl, previousAvailability) {
         (async (enrollUrl) => {
             console.log('running enroller');
             const browser = await puppeteer.launch({
-                args: ['--no-sandbox', '--disable-setuid-sandbox']
+                args: ['--no-sandbox', '--disable-setuid-sandbox'],
             });
             const page = await browser.newPage();
             await login(page, config, credentials);
             let availability = '';
-            try {
-                while (true) { // eslint-disable-line no-constant-condition
+            while (true) { // eslint-disable-line no-constant-condition
+                try {
                     availability =
                         await tryEnroll(page, enrollUrl, availability);
                     await sleep(rate);
+                } catch (e) {
+                    console.log('\n');
+                    console.log(new Date());
+                    console.log(e);
+                    if (!e.message.toLowerCase().includes('timeout')) {
+                        await page.screenshot({
+                            path: 'screenshot.png',
+                            fullPage: true,
+                        });
+                        console.log('error! saved screenshot');
+                        await sendEmailNotification(e.toString());
+                    }
+                    await sleep(30);
                 }
-            } catch (e) {
-                console.log(new Date());
-                await page.screenshot({path: 'screenshot.png', fullPage: true});
-                console.log('error! saved screenshot');
-                console.log(e);
-                await sendEmailNotification(e.toString());
-            } finally {
-                browser.close();
             }
+            browser.close();
         })(url);
     }
 })();
