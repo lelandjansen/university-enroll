@@ -49,7 +49,7 @@ async function checkEnroll(page, enrollUrl) {
     } = config;
 
     await page.goto(enrollUrl);
-    await page.screenshot({path: 'screenshot.png', fullPage: true});
+    // await page.screenshot({path: 'screenshot.png', fullPage: true});
 
     const tableRows = await page.$$(enrollTableRowId);
 
@@ -131,12 +131,12 @@ async function tryEnroll(page, enrollUrl, previousAvailability) {
             await openClass.selectBox.click();
             console.log(`Enrolling in ${openClass.name}`);
         }
-        await page.screenshot({path: 'selected.png', fullPage: true});
+        // await page.screenshot({path: 'selected.png', fullPage: true});
         await (await page.$(config.enrollSubmitButton)).click();
-        await page.screenshot({path: 'enrolling.png', fullPage: true});
+        // await page.screenshot({path: 'enrolling.png', fullPage: true});
         await page.waitForSelector(config.enrollSubmitConfirmButton);
         await (await page.$(config.enrollSubmitConfirmButton)).click();
-        await page.screenshot({path: 'done.png', fullPage: true});
+        // await page.screenshot({path: 'done.png', fullPage: true});
         for (const openClass of openClasses) {
             console.log(`successfully enrolled in ${openClass.name}`);
         }
@@ -163,8 +163,8 @@ async function tryEnroll(page, enrollUrl, previousAvailability) {
         console.log('\n');
         console.log(new Date());
         console.log(e);
-        await page.screenshot({path: 'screenshot.png', fullPage: true});
-        console.log('error! saved screenshot');
+        // await page.screenshot({path: 'screenshot.png', fullPage: true});
+        // console.log('error! saved screenshot');
         await sendEmailNotification(e.toString());
     } finally {
         browser.close();
@@ -188,12 +188,13 @@ async function tryEnroll(page, enrollUrl, previousAvailability) {
                     console.log('\n');
                     console.log(new Date());
                     console.log(e);
-                    if (!e.message.toLowerCase().includes('timeout')) {
-                        await page.screenshot({
-                            path: 'screenshot.png',
-                            fullPage: true,
-                        });
-                        console.log('error! saved screenshot');
+                    if (!e.message.toLowerCase().includes('timeout') &&
+                        !e.message.includes('ERR_CONNECTION_RESET')) {
+                        // await page.screenshot({
+                        //     path: 'screenshot.png',
+                        //     fullPage: true,
+                        // });
+                        // console.log('error! saved screenshot');
                         await sendEmailNotification(e.toString());
                     }
                     await sleep(30);
